@@ -3,6 +3,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow_probability as tfp
+import cv2
 from visual_search_vae import VAE, encoder, decoder
 ds = tfp.distributions
 DIMS = (28, 28, 1)
@@ -52,7 +53,8 @@ similar_indices = query(query_image_id, k=k)
 
 # Display the query image
 st.subheader("Query Image:")
-st.image(1 - train_images[query_image_id, :], use_column_width=True,  width=200,caption=f"Image ID: {query_image_id}")
+query_img = train_images[query_image_id]
+st.image(cv2.resize(1 - query_img, (100, 100)), use_column_width=True, caption=f"Image ID: {query_image_id}")
 
 # Display similar images
 st.subheader(f"Top {k} Similar Images:")
@@ -60,7 +62,8 @@ columns = st.columns(k)
 
 for i in range(k):
     with columns[i]:
-        st.image(1 - train_images[similar_indices[i], :],  width=200,use_column_width=True, caption=f"Image ID: {similar_indices[i]}")
+        similar_img = train_images[similar_indices[i]]
+        st.image(cv2.resize(1 - similar_img, (100, 100)), use_column_width=True, caption=f"Image ID: {similar_indices[i]}")
 
 # Display in Streamlit app
 st.pyplot(plt)
