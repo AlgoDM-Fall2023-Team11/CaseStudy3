@@ -163,15 +163,16 @@ def search_by_style(image_style_embeddings, images, reference_image, max_results
     return similar_image_filenames
 
  # Add a file uploader for the reference image
+st.title("Artistic Style Finder App") 
 reference_image = st.file_uploader("Select a reference image", type=["jpg", "png"])
 
 if reference_image is not None:
     reference_image_name = reference_image.name
         
-        # Display the reference image
+    # Display the reference image
     st.image(reference_image, caption=f"Reference Image: {reference_image_name}", use_column_width=True)
         
-        # Perform the style-based image search when the user clicks a button
+    # Perform the style-based image search when the user clicks a button
     if st.button("Search for Similar Images"):
         results = search_by_style(image_style_embeddings, images, reference_image_name, max_results=10)
                 # Display the output images in a horizontal row
