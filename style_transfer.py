@@ -1,21 +1,81 @@
+import streamlit as st
+import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.applications.vgg19 import preprocess_input
 from tensorflow.keras.models import Model
 print(tf.__version__)
-import streamlit as st
-import numpy as np
+
 import matplotlib.pyplot as plt
 plt.rcParams.update({'pdf.fonttype': 'truetype'})
 from matplotlib import offsetbox
 import numpy as np
 from tqdm import tqdm
+
 import glob
 import ntpath
 import cv2
+
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn import manifold
 import scipy as sc
 
+
+# Load precomputed style embeddings from a data file (e.g., CSV or JSON)
+# Assume you have a DataFrame with columns: 'image_path', 'style_embedding'
+# style_embeddings_df = pd.read_csv('style_embeddings.csv')
+
+st.title("Artistic Style Similarity App")
+
+# User input: Select a reference image and set max results
+#
+# 
+# reference_image = st.file_uploader("Upload a reference image", type=["jpg", "jpeg", "png"])
+#max_results = st.slider("Max Results", min_value=1, max_value=20, value=10)
+
+
+import streamlit as st
+import cv2
+import ntpath
+import matplotlib.pyplot as plt
+import glob
+
+# Replace this with the full path to your directory
+directory_path = 'images-by-style'
+
+# Use the directory_path in the glob function
+image_paths = glob.glob(f'{directory_path}/*.jpg')
+
+images = {}
+for image_path in image_paths:
+    image = cv2.imread(image_path, 3)
+    b, g, r = cv2.split(image)           # get b, g, r
+    image = cv2.merge([r, g, b])         # switch it to r, g, b
+    image = cv2.resize(image, (200, 200))
+    images[ntpath.basename(image_path)] = image
+
+n_col = 8
+n_row = int(len(images) / n_col)
+f, ax = plt.subplots(n_row, n_col, figsize=(16, 8))
+plt.axis('off')  # Remove axes in the plot
+
+# for i in range(n_row):
+#     for j in range(n_col):
+#         ax[i, j].imshow(list(images.values())[n_col * i + j])
+#         ax[i, j].set_axis_off()
+
+# # Show the plot in the Streamlit web app
+# st.pyplot(f)
+
+
+
+
+
+
+
+
+import ssl
+
+ssl._create_default_https_context = ssl._create_unverified_context
 
 def load_image(image):
     image = plt.imread(image)
@@ -27,29 +87,19 @@ def load_image(image):
 #
 # content layers describe the image subject
 #
-content_layers = ['block5_conv2']
+content_layers = ['block5_conv2'] 
 
 #
 # style layers describe the image style
 # we exclude the upper level layes to focus on small-size style details
 #
-style_layers = [
+style_layers = [ 
         'block1_conv1',
         'block2_conv1',
-        'block3_conv1',
-        #'block4_conv1',
+        'block3_conv1', 
+        #'block4_conv1', 
         #'block5_conv1'
-    ]
-image_paths = glob.glob('images-by-style/*.jpg')
-print(f'Found [{len(image_paths)}] images')
-
-images = {}
-for image_path in image_paths:
-    image = cv2.imread(image_path, 3)
-    b,g,r = cv2.split(image)           # get b, g, r
-    image = cv2.merge([r,g,b])         # switch it to r, g, b
-    image = cv2.resize(image, (200, 200))
-    images[ntpath.basename(image_path)] = image    
+    ] 
 
 def selected_layers_model(layer_names, baseline_model):
     outputs = [baseline_model.get_layer(name).output for name in layer_names]
@@ -60,6 +110,7 @@ def selected_layers_model(layer_names, baseline_model):
 def gram_matrix(input_tensor):
     result = tf.linalg.einsum('bijc,bijd->bcd', input_tensor, input_tensor)
     input_shape = tf.shape(input_tensor)
+
     num_locations = tf.cast(input_shape[1]*input_shape[2], tf.float32)
     return result/(num_locations)
 
@@ -98,7 +149,14 @@ class StyleModel(tf.keras.models.Model):
 
         return {'content':content_dict, 'style':style_dict}
 
-vgg = tf.keras.applications.VGG19(include_top=False, weights='imagenet')
+def load_vgg19_model():
+    vgg = tf.keras.applications.VGG19(include_top=False, weights=None)
+    vgg.load_weights('vgg19_weights.h5')
+    return vgg
+
+# Load the VGG19 model
+vgg = load_vgg19_model()
+
 
 def image_to_style(image_tensor):
     extractor = StyleModel(style_layers, content_layers)
@@ -106,76 +164,55 @@ def image_to_style(image_tensor):
 
 def style_to_vec(style):
     # concatenate gram matrics in a flat vector
-    return np.hstack([np.ravel(s) for s in style.values()])
+    return np.hstack([np.ravel(s) for s in style.values()]) 
 
 #
 # Print shapes of the style layers and embeddings
 #
 image_tensor = load_image(image_paths[0])
 style_tensors = image_to_style(image_tensor)
-# for k,v in style_tensors.items():
-#     print(f'Style tensor {k}: {v.shape}')
+for k,v in style_tensors.items():
+    print(f'Style tensor {k}: {v.shape}')
 style_embedding = style_to_vec( style_tensors )
-# print(f'Style embedding: {style_embedding.shape}')
+print(f'Style embedding: {style_embedding.shape}')
 
 #
-# compute styless
+# compute styles
 #
 image_style_embeddings = {}
-for image_path in tqdm(image_paths):
+for image_path in tqdm(image_paths): 
     image_tensor = load_image(image_path)
-    style = style_to_vec( image_to_style(image_tensor) )
+    print(image_tensor)
+    print(type(image_tensor))
+    style = style_to_vec(image_to_style(image_tensor) )
     image_style_embeddings[ntpath.basename(image_path)] = style
 
-#
-def embedding_plot(X, images, thumbnail_sparsity = 0.005, thumbnail_size = 0.3):
-    x_min, x_max = np.min(X, axis=0), np.max(X, axis=0)
-    X = (X - x_min) / (x_max - x_min)
-    fig, ax = plt.subplots(1, figsize=(12, 12))
+import streamlit as st
 
-    shown_images = np.array([[1., 1.]])
-    for i in range(X.shape[0]):
-        if np.min(np.sum((X[i] - shown_images) ** 2, axis=1)) < thumbnail_sparsity: continue
-        shown_images = np.r_[shown_images, [X[i]]]
-        thumbnail = offsetbox.OffsetImage(images[i], cmap=plt.cm.gray_r, zoom=thumbnail_size)
-        ax.add_artist(offsetbox.AnnotationBbox(thumbnail, X[i], bboxprops = dict(edgecolor='white'), pad=0.0))
+# ... Your existing code ...
 
-    plt.grid(True)
+# Function to search for similar images using user's uploaded image
+def search_similar_images(user_uploaded_image, image_style_embeddings, images, max_results=10):
+    user_image_tensor = load_image(user_uploaded_image)
+    user_style = style_to_vec(image_to_style(user_image_tensor))
 
-tsne = manifold.TSNE(n_components=2, init='pca', perplexity=10, random_state=0)
-X_tsne = tsne.fit_transform( np.array(list(image_style_embeddings.values())) )
-embedding_plot(X_tsne, images=list(images.values()))
-
-def search_by_style(image_style_embeddings, images, reference_image, max_results=10, images_directory='images-by-style/'):
-    v0 = image_style_embeddings[reference_image]
     distances = {}
-    for k, v in image_style_embeddings.items():
-        d = sc.spatial.distance.cosine(v0, v)
-        distances[k] = d
+    for image_path, style_embedding in image_style_embeddings.items():
+        d = sc.spatial.distance.cosine(user_style, style_embedding)
+        distances[image_path] = d
 
-    sorted_neighbors = sorted(distances.items(), key=lambda x: x[1], reverse=False)
+    sorted_neighbors = sorted(distances.items(), key=lambda x: x[1])
+    st.write("your choice")
+    st.image(user_image)
 
+    st.write("Most similar Artist Styles:")
+    for i, (image_path, distance) in enumerate(sorted_neighbors[:max_results]):
+        st.image(images[image_path], caption=f"Distance: {distance},   Name:{image_path}", use_column_width=True)
 
-    # Extract the filenames of the most similar images with the prefix
-    similar_image_filenames = [images_directory + img[0] for img in sorted_neighbors[:max_results]]
+# Streamlit UI
+st.title("Choose image to clasify artist styles matching your search")
+user_image = st.file_uploader("Upload your image:", type=["jpg", "jpeg", "png"])
+if user_image:
+    search_similar_images(user_image, image_style_embeddings, images)
 
-    # Return the list of similar image filenames
-    return similar_image_filenames
-
- # Add a file uploader for the reference image
-st.title("Artistic Style Finder App") 
-reference_image = st.file_uploader("Select a reference image", type=["jpg", "png"])
-
-if reference_image is not None:
-    reference_image_name = reference_image.name
-        
-    # Display the reference image
-    st.image(reference_image, caption=f"Reference Image: {reference_image_name}", use_column_width=True)
-        
-    # Perform the style-based image search when the user clicks a button
-    if st.button("Search for Similar Images"):
-        results = search_by_style(image_style_embeddings, images, reference_image_name, max_results=10)
-                # Display the output images in a horizontal row
-        st.write("Similar Images:")
-        for result in results:
-            st.image(result, use_column_width=True)
+# ... Your existing code ...
