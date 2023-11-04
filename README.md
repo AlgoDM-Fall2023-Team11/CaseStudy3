@@ -2,10 +2,15 @@
  The Visual Search application combines various deep learning and image processing techniques to help users find images based on different criteria: artistic style, product type, and visual similarity using VAEs. 
 
 * Codelabs Link:
-  https://codelabs-preview.appspot.com/?file_id=1ldFdnOQLou_sz7LPEpDj4i-I8gnRSN4umOKqVvHFy-0#1 
+
+  https://codelabs-preview.appspot.com/?file_id=1ldFdnOQLou_sz7LPEpDj4i-I8gnRSN4umOKqVvHFy-0#1
+  
 * Video Description:
+
   https://drive.google.com/file/d/1pveAxUnd4p2YceAedtoe-WEAgHx8fOky/view?usp=sharing
+  
 * Code Spaces Functionality Demo(Part2):
+
   https://drive.google.com/file/d/1bdGWsjARChgFZEwIrJwOBy-xOWtWrHJB/view?usp=sharing
  
 ## Visual Search leveraging Tensorflow, OpenCV and Streamlit
