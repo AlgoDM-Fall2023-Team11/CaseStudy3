@@ -10,5 +10,4 @@ tensorflow_probability
 tabulate
 pandas
 seaborn
-random
 warnings
