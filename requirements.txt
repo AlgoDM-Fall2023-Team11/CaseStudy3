@@ -7,3 +7,8 @@ scipy
 tqdm
 opencv-python-headless==4.5.4.60
 tensorflow_probability
+tabulate
+pandas
+seaborn
+random
+warnings
