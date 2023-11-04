@@ -85,7 +85,7 @@ import tensorflow as tf
 from PIL import Image
 import numpy as np
 
-st.title('Similarity Image Search')
+st.title('Image Classification by Search')
 
 # Load the model
 model = tf.keras.models.load_model('vis_search.h5')
