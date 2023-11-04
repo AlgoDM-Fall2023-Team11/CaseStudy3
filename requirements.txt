@@ -2,7 +2,7 @@ tensorflow
 streamlit
 numpy
 matplotlib
-opencv
+cv2
 scikit-learn
 scipy
 tqdm
