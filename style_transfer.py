@@ -49,7 +49,7 @@ for image_path in image_paths:
     b,g,r = cv2.split(image)           # get b, g, r
     image = cv2.merge([r,g,b])         # switch it to r, g, b
     image = cv2.resize(image, (200, 200))
-    images[ntpath.basename(image_path)] = image      
+    images[ntpath.basename(image_path)] = image    
 
 def selected_layers_model(layer_names, baseline_model):
     outputs = [baseline_model.get_layer(name).output for name in layer_names]
