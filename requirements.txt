@@ -152,6 +152,7 @@ soupsieve==2.5
 sqlparse==0.4.4
 stack-data==0.6.3
 streamlit==1.27.2
+tabulate
 tenacity==8.2.3
 tensorboard==2.14.1
 tensorboard-data-server==0.7.1
