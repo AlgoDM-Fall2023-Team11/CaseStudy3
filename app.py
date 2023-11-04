@@ -3,7 +3,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import tensorflow_probability as tfp
-from vae import VAE, encoder, decoder
+from visual_search_vae import VAE, encoder, decoder
 ds = tfp.distributions
 DIMS = (28, 28, 1)
 
